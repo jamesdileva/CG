@@ -8,6 +8,10 @@ from pathlib import Path
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Initialize database on startup
+from backend.core.database import init_db
+from backend.llm import init_llm
+
 app = FastAPI(
     title="AI Documentary Studio API",
     description="Backend for local-first documentary production",
@@ -23,6 +27,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+@app.on_event("startup")
+async def startup_event():
+    """Initialize on app startup"""
+    logger.info("Starting up...")
+    init_db()
+    await init_llm()
+    logger.info("Startup complete")
+
+
 @app.get("/")
 async def root():
     return {
@@ -31,15 +45,19 @@ async def root():
         "status": "running"
     }
 
+
 @app.get("/health")
 async def health():
     return {"status": "healthy"}
 
-# TODO: Import and include routers
-# from backend.api import topics, scripts, pipeline, research, videos, analytics
-# app.include_router(topics.router)
-# app.include_router(scripts.router)
-# etc.
+
+# Import and include routers
+from backend.api import topics, scripts, pipeline
+
+app.include_router(topics.router)
+app.include_router(scripts.router)
+app.include_router(pipeline.router)
+
 
 if __name__ == "__main__":
     import uvicorn

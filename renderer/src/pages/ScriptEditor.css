@@ -1,0 +1,179 @@
+.script-editor {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: white;
+}
+
+.editor-header {
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid #e0e0e0;
+  background: white;
+}
+
+.editor-header h1 {
+  margin: 0 0 0.5rem 0;
+  color: #1a1a1a;
+  font-size: 1.5rem;
+}
+
+.editor-header h2 {
+  margin: 0;
+  color: #666;
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+.editor-container {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.script-list {
+  width: 250px;
+  border-right: 1px solid #e0e0e0;
+  overflow-y: auto;
+  background: #f9f9f9;
+  padding: 1rem 0;
+}
+
+.script-list h3 {
+  padding: 0 1rem;
+  margin: 0 0 1rem 0;
+  color: #1a1a1a;
+  font-size: 0.95rem;
+}
+
+.script-item {
+  padding: 1rem;
+  margin: 0 0.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  border-left: 3px solid transparent;
+  transition: all 0.2s;
+  background: transparent;
+}
+
+.script-item:hover {
+  background: white;
+  border-left-color: #0066cc;
+}
+
+.script-item.active {
+  background: white;
+  border-left-color: #0066cc;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.script-item-title {
+  font-weight: 500;
+  color: #1a1a1a;
+  font-size: 0.95rem;
+  margin-bottom: 0.25rem;
+}
+
+.script-item-status {
+  font-size: 0.8rem;
+  color: #999;
+}
+
+.editor-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.editor-toolbar {
+  padding: 1rem 2rem;
+  border-bottom: 1px solid #e0e0e0;
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  background: white;
+}
+
+.editor-toolbar .btn {
+  padding: 0.6rem 1.2rem;
+  font-size: 0.95rem;
+}
+
+.version {
+  margin-left: auto;
+  color: #999;
+  font-size: 0.9rem;
+}
+
+.script-textarea {
+  flex: 1;
+  padding: 1.5rem 2rem;
+  border: none;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  resize: none;
+  outline: none;
+  color: #1a1a1a;
+}
+
+.editor-info {
+  padding: 1rem 2rem;
+  background: #f9f9f9;
+  border-top: 1px solid #e0e0e0;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.editor-info p {
+  margin: 0.25rem 0;
+}
+
+.empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  color: #999;
+  font-size: 1.1rem;
+}
+
+.empty {
+  padding: 0 1rem;
+  color: #999;
+  font-size: 0.9rem;
+}
+
+/* Button styles */
+.btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: #0066cc;
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #0052a3;
+}
+
+.btn-success {
+  background: #22863a;
+  color: white;
+}
+
+.btn-success:hover:not(:disabled) {
+  background: #1a6730;
+}
