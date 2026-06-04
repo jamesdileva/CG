@@ -1,0 +1,567 @@
+User: Review my architecture.md and blueprint.md files, lets plan this whole thing out. Ask me any questions needed and we can go from there
+
+Claude: I'll review both files to understand your project and architecture.
+
+Read [](file:///c%3A/Users/j/CG/architecture.md)
+
+Read [](file:///c%3A/Users/j/CG/blueprint.md)
+
+I've reviewed both documents. You have a solid architecture for a **local-first documentary production system**: Electron UI + Python backend orchestrating a state-driven pipeline from topics → research → scripts → video → YouTube upload → analytics feedback loop.
+
+Before I draft a comprehensive plan, I need to clarify your immediate goals:
+
+Used tool: AskUserQuestion
+
+Analyzing your answers...
+
+Perfect! You want the complete 5-phase roadmap with testability built in at each phase, plus the phase artifact documentation system. A few more details before I write the plan:
+
+Used tool: AskUserQuestion
+
+Analyzing your answers...
+
+Great—Ollama with context constraints is clear. Since you said "generate all scaffolding," let me quickly check what currently exists in your CG folder, then I'll write a comprehensive plan.
+
+Searched for files matching `**/*`
+
+Here is Claude's plan:
+
+# AI Documentary Studio — Implementation Plan
+
+## Context
+
+**Project**: Local-first desktop application for generating, researching, scripting, and producing long-form YouTube documentaries via AI assistance + human approval gates.
+
+**Core Insight**: This is a *state-driven production pipeline*, not a chatbot. Every topic moves through a deterministic state machine (DISCOVERED → RANKED → APPROVED → RESEARCHING → SCRIPT_APPROVED → RENDERED → UPLOADED → ARCHIVED). State transitions are the core control mechanism.
+
+**Tech Stack**:
+- **Frontend**: Electron + React (TypeScript)
+- **Backend**: Python FastAPI
+- **Database**: SQLite
+- **LLM**: Ollama (llama3.1, ctx_window=4096, local only)
+- **Video**: FFmpeg + TTS
+- **Comms**: HTTP (localhost)
+
+**Approach**: Build 5 phases incrementally. After each phase, generate a documentation artifact package (overview, architecture, API reference, schema, examples, lessons learned). This makes the project self-documenting.
+
+---
+
+## Full Project Scaffolding
+
+```
+c:\Users\j\CG/
+├── README.md                    # Project overview
+├── architecture.md              # (existing) High-level design
+├── blueprint.md                 # (existing) Technical blueprint
+├── DEVELOPMENT.md               # Setup guide + running locally
+├── .env.example                 # Environment template
+│
+├── backend/                     # Python FastAPI
+│   ├── main.py                 # FastAPI entrypoint
+│   ├── requirements.txt         # Python dependencies
+│   ├── run.py                  # Local dev runner
+│   │
+│   ├── api/
+│   │   ├── __init__.py
+│   │   ├── topics.py           # Topic generation & approval
+│   │   ├── research.py         # Research endpoint
+│   │   ├── scripts.py          # Script generation & editing
+│   │   ├── pipeline.py         # Pipeline control
+│   │   ├── videos.py           # Video rendering
+│   │   └── analytics.py        # YouTube analytics ingestion
+│   │
+│   ├── core/
+│   │   ├── __init__.py
+│   │   ├── database.py         # SQLite connection + migrations
+│   │   ├── config.py           # Configuration (Ollama URL, etc.)
+│   │   ├── logger.py           # Logging
+│   │   └── models.py           # Pydantic data models
+│   │
+│   ├── pipeline/
+│   │   ├── __init__.py
+│   │   ├── orchestrator.py     # Main pipeline state machine
+│   │   ├── states.py           # State definitions + transitions
+│   │   ├── jobs.py             # Job queue + worker
+│   │   └── transitions.py      # State transition logic
+│   │
+│   ├── llm/
+│   │   ├── __init__.py
+│   │   ├── provider.py         # Abstract LLMProvider class
+│   │   ├── ollama.py           # Ollama implementation
+│   │   ├── prompts/
+│   │   │   ├── topic_generation.txt
+│   │   │   ├── research_extraction.txt
+│   │   │   ├── script_generation.txt
+│   │   │   └── fact_check.txt
+│   │   └── utils.py            # Token counting, embeddings
+│   │
+│   ├── research/
+│   │   ├── __init__.py
+│   │   ├── scraper.py          # Web scraping (trafilatura)
+│   │   ├── sources.py          # Source credibility ranking
+│   │   ├── extractor.py        # Fact extraction from sources
+│   │   └── dedup.py            # Embedding-based deduplication
+│   │
+│   ├── video/
+│   │   ├── __init__.py
+│   │   ├── scenes.py           # Scene splitting from script
+│   │   ├── tts.py              # TTS integration (espeak, edge-tts, etc.)
+│   │   ├── ffmpeg_builder.py   # FFmpeg command generation
+│   │   └── renderer.py         # Video rendering orchestration
+│   │
+│   ├── assets/
+│   │   ├── __init__.py
+│   │   └── manager.py          # Local file asset storage
+│   │
+│   ├── models/
+│   │   ├── __init__.py
+│   │   ├── topics.py
+│   │   ├── scripts.py
+│   │   ├── videos.py
+│   │   ├── jobs.py
+│   │   └── analytics.py
+│   │
+│   ├── utils/
+│   │   ├── __init__.py
+│   │   ├── embeddings.py       # Vector embeddings (OpenAI or local)
+│   │   ├── similarity.py       # Cosine similarity for dedup
+│   │   └── validators.py       # Input validation
+│   │
+│   └── tests/
+│       ├── __init__.py
+│       ├── conftest.py         # Pytest fixtures
+│       ├── test_pipeline.py
+│       ├── test_llm.py
+│       ├── test_research.py
+│       ├── test_video.py
+│       └── mocks/
+│           └── mock_ollama.py
+│
+├── database/
+│   ├── schema.sql              # SQLite schema (all tables)
+│   └── migrations.py           # Schema versioning
+│
+├── renderer/                    # Electron + React
+│   ├── package.json
+│   ├── tsconfig.json
+│   ├── vite.config.ts
+│   │
+│   ├── electron/
+│   │   ├── main.ts             # Main process
+│   │   ├── preload.ts          # IPC bridge
+│   │   └── utils.ts
+│   │
+│   ├── src/
+│   │   ├── pages/
+│   │   │   ├── Dashboard.tsx
+│   │   │   ├── Topics.tsx
+│   │   │   ├── Research.tsx
+│   │   │   ├── ScriptEditor.tsx
+│   │   │   ├── Production.tsx
+│   │   │   ├── Publish.tsx
+│   │   │   └── Analytics.tsx
+│   │   │
+│   │   ├── components/
+│   │   │   ├── TopicCard.tsx
+│   │   │   ├── ScriptBlock.tsx
+│   │   │   ├── SourceViewer.tsx
+│   │   │   ├── VideoTimeline.tsx
+│   │   │   ├── PipelineStatus.tsx
+│   │   │   └── JobQueue.tsx
+│   │   │
+│   │   ├── api/
+│   │   │   ├── client.ts       # HTTP client (localhost:8000)
+│   │   │   ├── topics.ts
+│   │   │   ├── scripts.ts
+│   │   │   ├── pipeline.ts
+│   │   │   └── videos.ts
+│   │   │
+│   │   ├── store/
+│   │   │   ├── topicStore.ts
+│   │   │   ├── scriptStore.ts
+│   │   │   ├── pipelineStore.ts
+│   │   │   └── useStore.ts     # Zustand or similar
+│   │   │
+│   │   ├── utils/
+│   │   │   ├── formatters.ts
+│   │   │   └── constants.ts
+│   │   │
+│   │   └── App.tsx
+│   │
+│   └── tests/
+│       ├── components.test.tsx
+│       └── api.test.ts
+│
+├── data/                        # Local storage (generated at runtime)
+│   ├── projects/
+│   │   └── {topic_id}/
+│   │       ├── research.json
+│   │       ├── script.txt
+│   │       ├── scenes/
+│   │       ├── audio/
+│   │       ├── thumbnails/
+│   │       └── video.mp4
+│   │
+│   ├── db/
+│   │   └── studio.db           # SQLite database file
+│   │
+│   └── assets/
+│       ├── backgrounds/
+│       ├── music/
+│       └── fonts/
+│
+├── docs/                        # Phase documentation packages
+│   ├── phase-01-core-pipeline/
+│   │   ├── overview.md
+│   │   ├── architecture.md
+│   │   ├── api-reference.md
+│   │   ├── database-schema.md
+│   │   ├── code-examples.md
+│   │   ├── prompts.md
+│   │   └── lessons-learned.md
+│   │
+│   ├── phase-02-research-system/
+│   │   └── (same structure)
+│   │
+│   ├── phase-03-video-pipeline/
+│   │   └── (same structure)
+│   │
+│   ├── phase-04-youtube-integration/
+│   │   └── (same structure)
+│   │
+│   └── phase-05-analytics-loop/
+│       └── (same structure)
+│
+└── config/
+    ├── settings.json           # Default config
+    └── .env                    # Local overrides
+```
+
+---
+
+## Phase Breakdown
+
+### 🟢 Phase 1: Core Pipeline (Sprint 1–2)
+
+**Goal**: Generate topics → select topic → generate script → edit script → approve script. *This alone has product value.*
+
+**Backend Tasks**:
+1. FastAPI scaffolding + SQLite setup
+2. Topic generation (LLM prompt + storage)
+3. Script generation (research mock → script)
+4. Database schema (topics, scripts, jobs tables)
+5. Pipeline orchestrator (state transitions)
+6. LLM provider abstraction (Ollama)
+
+**Frontend Tasks**:
+1. Electron shell + window setup
+2. Dashboard screen (generate button, status)
+3. Topics screen (list, approve/reject)
+4. Script editor (display, edit, approve)
+5. HTTP client (connect to backend)
+6. State management (Zustand)
+
+**Testing**:
+- Backend: Unit tests for pipeline state transitions, LLM calls, DB ops
+- Frontend: Component tests for UI, API integration tests
+- Manual: Generate 20 topics → edit script → approve workflow
+
+**Testable Milestone**:
+```
+$ npm run electron    # Launches Electron
+$ python backend/run.py  # Starts FastAPI on localhost:8000
+→ User generates topics, selects one, generates script, edits, approves
+→ Script saved to database
+```
+
+**Phase Artifact Package** (`docs/phase-01-core-pipeline/`):
+- `overview.md`: What we built, why it matters
+- `architecture.md`: Component diagram, data flow
+- `api-reference.md`: All endpoints for Phase 1
+- `database-schema.md`: Topics, scripts, jobs tables
+- `code-examples.md`: How to generate a topic, generate a script
+- `prompts.md`: LLM prompts used for topic/script generation
+- `lessons-learned.md`: Gotchas, design decisions, what to avoid
+
+---
+
+### 🟡 Phase 2: Research System (Sprint 3)
+
+**Goal**: Multi-source web scraping → fact extraction → research UI display.
+
+**Backend Tasks**:
+1. Trafilatura scraper (reliable text extraction)
+2. Source credibility ranking
+3. Fact extraction from sources (LLM)
+4. Deduplication (embeddings + cosine similarity)
+5. Research API endpoints
+
+**Frontend Tasks**:
+1. Research screen (sources list, facts, timeline, conflicts)
+2. Source viewer (display content, credibility score)
+3. Fact editing UI
+
+**Testing**:
+- Backend: Scraper reliability (mock URLs), fact extraction accuracy
+- Frontend: Display 50+ sources + facts without lag
+- Manual: Research a topic, see sources ranked by credibility
+
+**Testable Milestone**:
+```
+POST /api/research/start/{topic_id}
+→ Scrapes web, extracts facts, stores in DB
+GET /api/research/{topic_id}
+→ Returns {sources: [...], facts: [...], timeline: [...], conflicts: [...]}
+→ Frontend displays all data cleanly
+```
+
+**Phase Artifact Package**: Same structure, focused on research layer.
+
+---
+
+### 🔵 Phase 3: Video Pipeline (Sprint 4–5)
+
+**Goal**: Script → scenes → TTS audio → FFmpeg → MP4.
+
+**Backend Tasks**:
+1. Scene splitting from script
+2. TTS integration (edge-tts or espeak)
+3. FFmpeg builder (compose video from scenes + audio)
+4. Asset manager (organize generated media)
+5. Video rendering API
+
+**Frontend Tasks**:
+1. Production studio screen (scene preview, timeline, render button)
+2. Real-time render progress
+3. Export MP4 locally
+
+**Testing**:
+- Backend: Generate TTS, render 2-minute video, verify MP4 quality
+- Frontend: Timeline scrubbing, render progress updates
+- Manual: Full pipeline: topic → research → script → video export
+
+**Testable Milestone**:
+```
+POST /api/videos/render/{topic_id}
+→ Generates TTS for each scene
+→ Calls FFmpeg with scenes + audio
+→ Returns MP4 file path
+GET /api/videos/{topic_id}/status
+→ Returns {progress: 45%, elapsed: 120, eta: 150}
+```
+
+---
+
+### 🟣 Phase 4: YouTube Integration (Sprint 6)
+
+**Goal**: Upload video to YouTube with metadata, scheduling, thumbnail selection.
+
+**Backend Tasks**:
+1. YouTube OAuth setup
+2. Upload handler (chunked, resumable)
+3. Metadata builder (title, description, tags)
+4. YouTube API wrapper
+
+**Frontend Tasks**:
+1. Publish manager screen (metadata editor, schedule picker)
+2. Upload progress + preview
+
+**Testing**:
+- Backend: Mock YouTube API responses, test metadata validation
+- Frontend: Metadata editing, schedule picker
+- Manual: Upload video to test YouTube channel, verify metadata
+
+**Testable Milestone**:
+```
+POST /api/videos/{video_id}/upload
+→ Uploads to YouTube, returns youtube_id
+GET /api/videos/{video_id}/status
+→ Returns {status: "UPLOADED", youtube_url: "..."}
+```
+
+---
+
+### 🔴 Phase 5: Analytics Loop (Sprint 7)
+
+**Goal**: Pull YouTube analytics, feed back into topic scoring, auto-improve ranking.
+
+**Backend Tasks**:
+1. YouTube Analytics API integration
+2. Metrics ingestion (views, CTR, watch time)
+3. Topic scoring adjustment (learn from performance)
+4. Ranking algorithm update
+
+**Frontend Tasks**:
+1. Analytics screen (video performance, trend visualization)
+
+**Testing**:
+- Backend: Mock analytics data, scoring algorithm validation
+- Manual: Wait 48 hrs for real YouTube data, verify feedback loop
+
+**Testable Milestone**:
+```
+POST /api/analytics/sync
+→ Pulls data from YouTube API
+→ Updates topic scores in DB
+GET /api/analytics/{video_id}
+→ Returns {views: 1000, ctr: 0.05, watch_time_avg: 180s}
+```
+
+---
+
+## Critical Technical Decisions
+
+### 1. **State Machine Over Chat Prompts**
+Every topic is in one of 12 defined states. Transitions are explicit, guarded, logged.
+
+```python
+# backend/pipeline/states.py
+VALID_TRANSITIONS = {
+    "DISCOVERED": ["APPROVED"],
+    "APPROVED": ["RESEARCHING"],
+    "RESEARCHING": ["RESEARCH_COMPLETE"],
+    "RESEARCH_COMPLETE": ["SCRIPT_DRAFTED"],
+    "SCRIPT_DRAFTED": ["SCRIPT_APPROVED"],
+    "SCRIPT_APPROVED": ["ASSETS_GENERATED"],
+    "ASSETS_GENERATED": ["VIDEO_RENDERED"],
+    "VIDEO_RENDERED": ["THUMBNAIL_SELECTED"],
+    "THUMBNAIL_SELECTED": ["READY_TO_UPLOAD"],
+    "READY_TO_UPLOAD": ["UPLOADED"],
+    "UPLOADED": ["ANALYTICS_COLLECTED"],
+    "ANALYTICS_COLLECTED": ["ARCHIVED"]
+}
+```
+
+### 2. **LLM Abstraction Layer**
+All LLM calls go through a single provider interface. No direct Ollama calls scattered through codebase.
+
+```python
+# backend/llm/provider.py
+class LLMProvider:
+    async def generate(self, prompt: str, max_tokens: int = 4096) -> str:
+        pass
+```
+
+### 3. **Job Queue for Async Work**
+Long-running tasks (research, rendering) don't block the UI. Jobs table + worker loop.
+
+```python
+# backend/pipeline/jobs.py
+class Job:
+    id: str
+    type: str  # topic_generation, research, script, render
+    topic_id: str
+    status: str  # PENDING, RUNNING, COMPLETE, FAILED
+    payload: dict
+```
+
+### 4. **HTTP API (Not IPC)**
+Electron talks to Python backend via HTTP on localhost. Simpler, more debuggable.
+
+```
+Electron → POST localhost:8000/api/topics/generate
+        ← {topics: [...]}
+```
+
+### 5. **Embeddings for Dedup**
+Before generating a topic, check if similar topic exists via cosine similarity > 0.90.
+
+---
+
+## Implementation Order (Sequential)
+
+1. **Setup**
+   - Python venv, requirements.txt (FastAPI, pydantic, sqlalchemy, httpx, trafilatura, ollama, ffmpeg-python)
+   - Node + Electron scaffold
+   - SQLite schema + migrations
+   - `.env.example` template
+
+2. **Phase 1 Backend Core**
+   - FastAPI main.py
+   - Database layer
+   - LLM provider (Ollama)
+   - Topics API (generate, get, approve)
+   - Scripts API (generate, update, approve)
+   - Pipeline orchestrator + state machine
+
+3. **Phase 1 Frontend Core**
+   - Electron main process
+   - React app structure
+   - Dashboard, Topics, ScriptEditor screens
+   - HTTP client
+   - Zustand store
+
+4. **Phase 1 Integration + Testing**
+   - End-to-end workflow test
+   - Generate → select → script → approve
+   - Phase artifact package
+
+5. **Phase 2–5**: Repeat for each phase (research → video → upload → analytics)
+
+---
+
+## Testing Strategy per Phase
+
+| Phase | Backend Tests | Frontend Tests | E2E/Manual |
+|-------|--------------|----------------|-----------|
+| 1     | State transitions, LLM calls, DB ops | Component snapshot, API mocks | Generate topic, edit script, approve |
+| 2     | Scraper reliability, fact extraction | Source viewer rendering | Research a topic end-to-end |
+| 3     | TTS generation, FFmpeg command building | Timeline scrubbing | Generate full video MP4 |
+| 4     | YouTube OAuth, metadata validation | Publish form | Upload to YouTube staging |
+| 5     | Analytics sync, scoring algorithm | Chart rendering | Pull real analytics, verify feedback |
+
+**Tools**:
+- Backend: pytest + pytest-asyncio
+- Frontend: Vitest + React Testing Library
+- E2E: Manual + Electron dev tools
+
+---
+
+## How to Know Each Phase Is Complete
+
+- ✅ All code committed
+- ✅ Tests passing
+- ✅ Manual workflow succeeds
+- ✅ Phase artifact package generated (7 docs)
+- ✅ README updated with new capabilities
+
+---
+
+## Verification
+
+After implementing each phase, verify:
+1. Backend starts: `python backend/run.py` → FastAPI listening on :8000
+2. Frontend launches: `npm run electron` → Window opens
+3. API responds: `curl http://localhost:8000/api/topics`
+4. Database initialized: `data/db/studio.db` exists with schema
+5. Workflow: User can complete the phase's core loop in the UI
+
+---
+
+## Notes for Implementation
+
+- **Ollama Context Limit (4096)**: Design prompts tightly. Use prompt templates, not long context.
+- **Local-First Philosophy**: Everything saves to SQLite + filesystem. No required cloud.
+- **State as Source of Truth**: Query topic.status to know where a topic is in the pipeline.
+- **Phase Artifacts Matter**: The 7-doc package per phase is not optional—it's your project documentation.
+
+---
+
+
+Asked you to review the plan
+
+Plan approved! ✅ You now have a comprehensive roadmap for all 5 phases with:
+- Complete project scaffolding structure
+- Detailed tasks per phase
+- State machine architecture
+- Phase artifact documentation system
+- Clear testing strategy and verification steps
+
+**What would you like to tackle first?**
+
+1. **Setup & Scaffolding** — Create all folders, Python venv, requirements.txt, Electron + Node setup
+2. **Phase 1 Backend** — FastAPI, SQLite schema, LLM provider, pipeline orchestrator
+3. **Phase 1 Frontend** — Electron shell, React pages, state management
+4. **Something specific** — Name it
+
+Which direction?
