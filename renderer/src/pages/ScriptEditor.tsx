@@ -6,12 +6,24 @@ import './ScriptEditor.css';
 
 export function ScriptEditor() {
   const { topics } = useTopicStore();
-  const { scripts } = useScriptStore();
+  const { scripts, setScript } = useScriptStore();
+  const updateScriptStore = useScriptStore(s => s.updateScript);
   const [selectedScriptId, setSelectedScriptId] = useState<string | null>(null);
   const [content, setContent] = useState('');
   const [isDirty, setIsDirty] = useState(false);
   const [saving, setSaving] = useState(false);
   const [approving, setApproving] = useState(false);
+
+  useEffect(() => {
+    apiClient.listScripts().then((scriptsList) => {
+      for (const script of scriptsList) {
+        setScript(script);
+      }
+      if (scriptsList.length > 0 && !selectedScriptId) {
+        setSelectedScriptId(scriptsList[0].id);
+      }
+    });
+  }, []);
 
   const selectedScript = selectedScriptId
     ? scripts.get(selectedScriptId)
@@ -48,10 +60,10 @@ export function ScriptEditor() {
     setApproving(true);
     try {
       await apiClient.approveScript(selectedScript.id);
-      // Update the script status in store
+      updateScriptStore(selectedScript.id, { status: 'APPROVED' });
+      setApproving(false);
     } catch (err) {
       console.error('Failed to approve script:', err);
-    } finally {
       setApproving(false);
     }
   };

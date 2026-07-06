@@ -1,13 +1,12 @@
-"""Pydantic models for topics"""
 from pydantic import BaseModel, Field
 from typing import Optional
 from datetime import datetime
-import uuid
 
 
 class TopicBase(BaseModel):
     title: str = Field(..., min_length=5, max_length=200)
     description: Optional[str] = None
+    category: str = "General"
 
 
 class TopicCreate(TopicBase):
@@ -17,9 +16,13 @@ class TopicCreate(TopicBase):
 class TopicResponse(TopicBase):
     id: str
     status: str
+    interest_score: float = 0.0
+    uniqueness_score: float = 0.0
+    source_score: float = 0.0
     created_at: datetime
     updated_at: datetime
     approved_at: Optional[datetime] = None
+    published_at: Optional[datetime] = None
     embedding: Optional[bytes] = None
 
     class Config:

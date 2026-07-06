@@ -3,13 +3,14 @@
   "version": "0.1.0",
   "description": "Local-first desktop application for generating documentaries",
   "main": "dist-electron/main.js",
-  "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "npm run build:electron && vite build",
+    "build:electron": "tsc -p tsconfig.electron.json",
     "preview": "vite preview",
     "electron": "electron dist-electron/main.js",
-    "electron-dev": "concurrently \"npm run dev\" \"wait-on http://localhost:5173 && electron .\"",
+    "electron-dev": "npm run build:electron && concurrently -k \"npm run dev\" \"wait-on http://localhost:5173 && set VITE_DEV_SERVER_URL=http://localhost:5173 && electron .\"",
+    "start": "concurrently -k \"..\\venv\\Scripts\\python.exe ..\\backend\\run.py\" \"npm run electron-dev\"",
     "electron-build": "npm run build && electron-builder",
     "type-check": "tsc --noEmit"
   },

@@ -10,6 +10,7 @@ logger = logging.getLogger(__name__)
 
 # Initialize database on startup
 from backend.core.database import init_db
+from backend.core.config import settings
 from backend.llm import init_llm
 
 app = FastAPI(
@@ -18,10 +19,21 @@ app = FastAPI(
     version="0.1.0"
 )
 
-# Enable CORS for Electron frontend (localhost:5173)
+# Enable CORS for Electron frontend (dev + packaged)
+origins = [
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:3000",
+    "file://",
+    "null",
+]
+if settings.frontend_url not in origins:
+    origins.append(settings.frontend_url)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -52,11 +64,15 @@ async def health():
 
 
 # Import and include routers
-from backend.api import topics, scripts, pipeline
+from backend.api import topics, scripts, pipeline, research, videos, publish, analytics
 
 app.include_router(topics.router)
 app.include_router(scripts.router)
 app.include_router(pipeline.router)
+app.include_router(research.router)
+app.include_router(videos.router)
+app.include_router(publish.router)
+app.include_router(analytics.router)
 
 
 if __name__ == "__main__":

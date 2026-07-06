@@ -1,0 +1,151 @@
+.publish-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.publish-header,
+.publish-toolbar {
+  align-items: flex-start;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+}
+
+.publish-header h1 {
+  margin: 0 0 8px;
+}
+
+.publish-header p {
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.publish-toolbar {
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.publish-toolbar label {
+  font-weight: 700;
+}
+
+.publish-toolbar select,
+.publish-panel select {
+  border: 1px solid var(--input-border);
+  border-radius: 6px;
+  font: inherit;
+  min-width: 320px;
+  padding: 10px 12px;
+  background: var(--input-bg);
+  color: var(--text-primary);
+}
+
+.publish-grid {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(260px, 0.85fr) minmax(360px, 1.15fr);
+}
+
+.publish-panel {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  padding: 18px;
+}
+
+.publish-panel h2 {
+  font-size: 1.1rem;
+  margin: 0 0 16px;
+}
+
+.upload-card {
+  border-top: 1px solid var(--border-primary);
+  margin-top: 16px;
+  padding-top: 16px;
+}
+
+.upload-card h3 {
+  margin: 12px 0 8px;
+}
+
+.upload-card p {
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+
+.publish-auth-bar {
+  align-items: center;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  display: flex;
+  gap: 10px;
+  padding: 12px 16px;
+}
+
+.auth-label {
+  font-weight: 700;
+  margin-right: 4px;
+}
+
+.status-ok {
+  background: var(--bg-success);
+  color: var(--text-green);
+}
+
+.status-missing {
+  background: var(--bg-error);
+  color: var(--text-red);
+}
+
+.auth-code-input {
+  border: 1px solid var(--input-border);
+  border-radius: 6px;
+  font: inherit;
+  padding: 6px 10px;
+  width: 280px;
+  background: var(--input-bg);
+  color: var(--text-primary);
+}
+
+.btn-sm {
+  font-size: 0.85rem;
+  padding: 6px 12px;
+}
+
+.upload-result {
+  background: var(--bg-success);
+  border: 1px solid var(--border-success);
+  border-radius: 6px;
+  margin-top: 12px;
+  padding: 10px 14px;
+}
+
+.upload-result a {
+  color: var(--text-green);
+  font-weight: 700;
+}
+
+.publish-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+@media (max-width: 900px) {
+  .publish-header,
+  .publish-toolbar {
+    flex-direction: column;
+  }
+
+  .publish-toolbar select,
+  .publish-panel select {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .publish-grid {
+    grid-template-columns: 1fr;
+  }
+}

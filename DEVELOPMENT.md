@@ -124,18 +124,35 @@ TypeScript config is already set up:
 
 **Option A: Vite Dev Server Only** (for web testing)
 ```bash
+RUN FRONTEND
+
+cd renderer
 npm run dev
 # Open http://localhost:5173 in browser
 ```
 
-**Option B: Electron + Dev Server** (full desktop app)
+**Option B: RUN BACK END AND DO THIS BELOW Electron + Dev Server** (full desktop app)
 ```bash
+venv\Scripts\activate
+cd renderer
 npm run electron-dev
 # Electron window opens, connected to dev server
 ```
 
+```
+# Terminal 1: Backend**
+cd C:\Users\j\CG
+venv\Scripts\activate
+python backend\run.py
+**
+# Terminal 2: Frontend (Electron)**
+cd C:\Users\j\CG\renderer
+npm run electron-dev
+```
+
 **Option C: Build for Production**
 ```bash
+cd renderer
 npm run build
 npm run electron
 ```

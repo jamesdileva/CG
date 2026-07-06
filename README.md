@@ -113,7 +113,14 @@ Key settings:
 - `DATABASE_URL`: SQLite path
 
 ## Development
-
+# Terminal 1: Backend**
+cd C:\Users\j\CG
+venv\Scripts\activate
+python backend\run.py
+**
+# Terminal 2: Frontend (Electron)**
+cd C:\Users\j\CG\renderer
+npm run electron-dev
 ### Running Tests
 
 **Backend**:

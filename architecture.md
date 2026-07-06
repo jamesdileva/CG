@@ -30,8 +30,20 @@ Nothing publishes without approval.
 Everything is a state transition, not a “chat prompt”.
 
 ### **3\. Local-first**
+venv\Scripts\activate
+From renderer/:
+npm run start
+This runs both the backend and Electron frontend together (in the same terminal window). Or if you prefer separate terminals:
 
 Runs on your machine:
+# Terminal 1: Backend**
+cd C:\Users\j\CG
+venv\Scripts\activate
+python backend\run.py
+**
+# Terminal 2: Frontend (Electron)**
+cd C:\Users\j\CG\renderer
+npm run electron-dev
 
 * SQLite  
 * Local file storage  

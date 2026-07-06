@@ -5,10 +5,15 @@ CREATE TABLE IF NOT EXISTS topics (
     id TEXT PRIMARY KEY,
     title TEXT NOT NULL,
     description TEXT,
+    category TEXT DEFAULT 'General',
     status TEXT NOT NULL DEFAULT 'DISCOVERED',
+    interest_score REAL DEFAULT 0.0,
+    uniqueness_score REAL DEFAULT 0.0,
+    source_score REAL DEFAULT 0.0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     approved_at TIMESTAMP,
+    published_at TIMESTAMP,
     embedding BLOB
 );
 
@@ -25,6 +30,19 @@ CREATE TABLE IF NOT EXISTS scripts (
     FOREIGN KEY (topic_id) REFERENCES topics(id)
 );
 
+-- Scenes Table (Phase 3)
+CREATE TABLE IF NOT EXISTS scenes (
+    id TEXT PRIMARY KEY,
+    script_id TEXT NOT NULL,
+    order_index INTEGER NOT NULL,
+    text TEXT NOT NULL,
+    image_path TEXT,
+    audio_path TEXT,
+    duration REAL DEFAULT 8.0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (script_id) REFERENCES scripts(id)
+);
+
 -- Jobs Table (async work queue)
 CREATE TABLE IF NOT EXISTS jobs (
     id TEXT PRIMARY KEY,
@@ -35,6 +53,7 @@ CREATE TABLE IF NOT EXISTS jobs (
     result TEXT,
     error TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     started_at TIMESTAMP,
     completed_at TIMESTAMP,
     FOREIGN KEY (topic_id) REFERENCES topics(id)
@@ -87,8 +106,10 @@ CREATE TABLE IF NOT EXISTS youtube_uploads (
     youtube_id TEXT,
     title TEXT,
     description TEXT,
+    tags TEXT,
     status TEXT NOT NULL DEFAULT 'PENDING',
     scheduled_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     uploaded_at TIMESTAMP,
     FOREIGN KEY (video_id) REFERENCES videos(id)
 );
@@ -103,14 +124,32 @@ CREATE TABLE IF NOT EXISTS analytics (
     comments INTEGER DEFAULT 0,
     watch_time_seconds INTEGER DEFAULT 0,
     click_through_rate REAL DEFAULT 0.0,
+    topic_score REAL DEFAULT 0.0,
     synced_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (video_id) REFERENCES videos(id)
+);
+
+-- Assets Table (Phase 3)
+CREATE TABLE IF NOT EXISTS assets (
+    id TEXT PRIMARY KEY,
+    type TEXT NOT NULL CHECK(type IN ('image', 'audio', 'thumbnail')),
+    file_path TEXT NOT NULL,
+    topic_id TEXT NOT NULL,
+    scene_id TEXT,
+    source_url TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (topic_id) REFERENCES topics(id),
+    FOREIGN KEY (scene_id) REFERENCES scenes(id)
 );
 
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_topics_status ON topics(status);
 CREATE INDEX IF NOT EXISTS idx_scripts_topic_id ON scripts(topic_id);
+CREATE INDEX IF NOT EXISTS idx_scenes_script_id ON scenes(script_id);
 CREATE INDEX IF NOT EXISTS idx_jobs_status ON jobs(status);
 CREATE INDEX IF NOT EXISTS idx_research_sources_topic_id ON research_sources(topic_id);
+CREATE INDEX IF NOT EXISTS idx_research_facts_topic_id ON research_facts(topic_id);
 CREATE INDEX IF NOT EXISTS idx_videos_topic_id ON videos(topic_id);
 CREATE INDEX IF NOT EXISTS idx_youtube_uploads_video_id ON youtube_uploads(video_id);
+CREATE INDEX IF NOT EXISTS idx_youtube_uploads_status ON youtube_uploads(status);
+CREATE INDEX IF NOT EXISTS idx_analytics_video_id ON analytics(video_id);

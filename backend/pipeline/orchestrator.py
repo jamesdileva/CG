@@ -12,9 +12,14 @@ VALID_TRANSITIONS = {
     "DISCOVERED": ["APPROVED"],
     "APPROVED": ["RESEARCHING"],
     "RESEARCHING": ["RESEARCH_COMPLETE"],
-    "RESEARCH_COMPLETE": ["SCRIPT_DRAFTED"],
-    "SCRIPT_DRAFTED": ["SCRIPT_APPROVED"],
-    "SCRIPT_APPROVED": ["VIDEO_RENDERED"],
+    "RESEARCH_COMPLETE": ["RESEARCHING", "SCRIPT_DRAFTED"],
+    "SCRIPT_DRAFTED": ["SCRIPT_APPROVED", "VIDEO_RENDERED", "RESEARCHING"],
+    "SCRIPT_APPROVED": ["ASSETS_GENERATED", "VIDEO_RENDERED"],
+    "ASSETS_GENERATED": ["VIDEO_RENDERED"],
+    "VIDEO_RENDERED": ["READY_TO_UPLOAD"],
+    "READY_TO_UPLOAD": ["UPLOADED"],
+    "UPLOADED": ["ANALYTICS_COLLECTED"],
+    "ANALYTICS_COLLECTED": ["ARCHIVED"],
 }
 
 
@@ -32,6 +37,8 @@ class PipelineOrchestrator:
                 return False
 
             current_status = row["status"]
+            if current_status == new_status:
+                return True
             valid_next_states = VALID_TRANSITIONS.get(current_status, [])
             return new_status in valid_next_states
 

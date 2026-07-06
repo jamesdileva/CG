@@ -33,11 +33,30 @@ async def get_pipeline_status(topic_id: str):
             (topic_id,),
         )
         script_row = cursor.fetchone()
+        cursor.execute(
+            "SELECT COUNT(*) as count FROM research_sources WHERE topic_id = ?",
+            (topic_id,),
+        )
+        sources_row = cursor.fetchone()
+        cursor.execute(
+            "SELECT COUNT(*) as count FROM research_facts WHERE topic_id = ?",
+            (topic_id,),
+        )
+        facts_row = cursor.fetchone()
+        cursor.execute(
+            "SELECT status, file_path FROM videos WHERE topic_id = ? ORDER BY created_at DESC LIMIT 1",
+            (topic_id,),
+        )
+        video_row = cursor.fetchone()
 
         return {
             "topic_id": topic_id,
             "topic_status": topic_row["status"],
             "scripts_count": script_row["count"],
+            "sources_count": sources_row["count"],
+            "facts_count": facts_row["count"],
+            "video_status": video_row["status"] if video_row else None,
+            "video_file_path": video_row["file_path"] if video_row else None,
             "latest_update": script_row["latest"],
         }
 

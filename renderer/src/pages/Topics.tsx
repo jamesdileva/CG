@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTopicStore } from '../store/topicStore';
 import { useScriptStore } from '../store/scriptStore';
 import { apiClient } from '../api/client';
@@ -7,13 +7,29 @@ import './Topics.css';
 export function Topics() {
   const { topics, setTopics, setLoading, setError, updateTopic } = useTopicStore();
   const { setScript } = useScriptStore();
-  const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
   const [approvingId, setApprovingId] = useState<string | null>(null);
+  const [researchingId, setResearchingId] = useState<string | null>(null);
   const [generatingScriptId, setGeneratingScriptId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const mountedRef = useRef(true);
 
   useEffect(() => {
+    mountedRef.current = true;
     loadTopics();
+    return () => { mountedRef.current = false; };
   }, []);
+
+  useEffect(() => {
+    if (researchingId || generatingScriptId) return;
+    for (const t of topics) {
+      if (t.status === 'RESEARCHING') {
+        setResearchingId(t.id);
+        startPollResearch(t.id);
+      } else if (t.status === 'SCRIPT_DRAFTED' || t.status === 'SCRIPT_APPROVED') {
+        // Could resume script poll if needed
+      }
+    }
+  }, [topics.length > 0]);
 
   const loadTopics = async () => {
     setLoading(true);
@@ -48,24 +64,81 @@ export function Topics() {
     }
   };
 
+  const startPollScript = async (topicId: string, scriptId: string) => {
+    if (!mountedRef.current) return;
+    try {
+      const script = await apiClient.getScript(scriptId);
+      if (script.status !== 'GENERATING' && script.content) {
+        setScript(script);
+        updateTopic(topicId, { status: 'SCRIPT_DRAFTED' });
+        setGeneratingScriptId(null);
+        return;
+      }
+    } catch {
+      // continue polling
+    }
+    if (mountedRef.current) {
+      setTimeout(() => startPollScript(topicId, scriptId), 2000);
+    }
+  };
+
   const handleGenerateScript = async (topicId: string) => {
     setGeneratingScriptId(topicId);
     try {
       const result = await apiClient.generateScript(topicId);
-      // Wait for script generation
-      await new Promise((r) => setTimeout(r, 1500));
-      const script = await apiClient.getScript(result.script_id);
-      setScript(script);
-      setSelectedTopic(topicId);
+      startPollScript(topicId, result.script_id);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to generate script');
-    } finally {
       setGeneratingScriptId(null);
     }
   };
 
+  const handleDelete = async (topicId: string) => {
+    setDeletingId(topicId);
+    try {
+      await apiClient.deleteTopic(topicId);
+      setTopics(topics.filter((t) => t.id !== topicId));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete topic');
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const startPollResearch = async (topicId: string) => {
+    if (!mountedRef.current) return;
+    try {
+      const status = await apiClient.getPipelineStatus(topicId);
+      if (status.topic_status === 'RESEARCH_COMPLETE') {
+        const updatedTopic = await apiClient.getTopic(topicId);
+        updateTopic(topicId, { status: updatedTopic.status });
+        setResearchingId(null);
+        return;
+      }
+    } catch {
+      // continue polling
+    }
+    if (mountedRef.current) {
+      setTimeout(() => startPollResearch(topicId), 2000);
+    }
+  };
+
+  const handleStartResearch = async (topicId: string) => {
+    setResearchingId(topicId);
+    try {
+      await apiClient.startResearch(topicId);
+      updateTopic(topicId, { status: 'RESEARCHING' });
+      startPollResearch(topicId);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to start research');
+      setResearchingId(null);
+    }
+  };
+
   const discoveredTopics = topics.filter((t) => t.status === 'DISCOVERED');
-  const approvedTopics = topics.filter((t) => t.status === 'APPROVED');
+  const approvedTopics = topics.filter((t) =>
+    ['APPROVED', 'RESEARCHING', 'RESEARCH_COMPLETE'].includes(t.status)
+  );
 
   return (
     <div className="topics-container">
@@ -96,6 +169,13 @@ export function Topics() {
                   >
                     Reject
                   </button>
+                  <button
+                    onClick={() => handleDelete(topic.id)}
+                    disabled={deletingId === topic.id}
+                    className="btn btn-outline btn-danger"
+                  >
+                    {deletingId === topic.id ? 'Deleting...' : 'Delete'}
+                  </button>
                 </div>
               </div>
             ))}
@@ -111,18 +191,36 @@ export function Topics() {
               <div key={topic.id} className="topic-card approved">
                 <div className="topic-header">
                   <h3>{topic.title}</h3>
-                  <span className="status-badge approved">APPROVED</span>
+                  <span className={`status-badge ${topic.status === 'APPROVED' ? 'approved' : ''}`}>
+                    {topic.status === 'APPROVED' ? 'APPROVED' : topic.status.replace('_', ' ')}
+                  </span>
                 </div>
                 <p className="topic-description">{topic.description}</p>
-                <button
-                  onClick={() => handleGenerateScript(topic.id)}
-                  disabled={generatingScriptId === topic.id}
-                  className="btn btn-primary"
-                >
-                  {generatingScriptId === topic.id
-                    ? 'Generating Script...'
-                    : 'Generate Script'}
-                </button>
+                <div className="topic-actions">
+                  <button
+                    onClick={() => handleStartResearch(topic.id)}
+                    disabled={researchingId === topic.id}
+                    className="btn btn-outline"
+                  >
+                    {researchingId === topic.id ? 'Researching...' : 'Run Research'}
+                  </button>
+                  <button
+                    onClick={() => handleGenerateScript(topic.id)}
+                    disabled={generatingScriptId === topic.id}
+                    className="btn btn-primary"
+                  >
+                    {generatingScriptId === topic.id
+                      ? 'Generating Script...'
+                      : 'Generate Script'}
+                  </button>
+                  <button
+                    onClick={() => handleDelete(topic.id)}
+                    disabled={deletingId === topic.id}
+                    className="btn btn-outline btn-danger"
+                  >
+                    {deletingId === topic.id ? 'Deleting...' : 'Delete'}
+                  </button>
+                </div>
               </div>
             ))}
           </div>

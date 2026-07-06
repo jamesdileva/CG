@@ -1,8 +1,5 @@
-import { app, BrowserWindow, Menu } from 'electron'
+import { app, BrowserWindow, Menu, ipcMain } from 'electron'
 import path from 'path'
-import { fileURLToPath } from 'url'
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 let mainWindow: BrowserWindow | null = null
 
@@ -15,7 +12,6 @@ function createWindow() {
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
-      enableRemoteModule: false,
       nodeIntegration: false,
     },
   })
@@ -32,6 +28,48 @@ function createWindow() {
     mainWindow = null
   })
 }
+
+ipcMain.handle('open-auth-window', async (_event, url: string) => {
+  return new Promise<string>((resolve, reject) => {
+    const authWindow = new BrowserWindow({
+      width: 600,
+      height: 700,
+      webPreferences: {
+        nodeIntegration: false,
+        contextIsolation: true,
+      },
+    })
+
+    let resolved = false
+
+    const checkUrl = (url: string) => {
+      try {
+        const parsed = new URL(url)
+        if (parsed.searchParams.has('code')) {
+          resolved = true
+          authWindow.destroy()
+          resolve(parsed.searchParams.get('code')!)
+          return true
+        }
+      } catch {}
+      return false
+    }
+
+    authWindow.webContents.on('will-redirect', (_e, url) => { checkUrl(url) })
+    authWindow.webContents.on('will-navigate', (_e, url) => { checkUrl(url) })
+    authWindow.webContents.on('did-navigate', (_e, url) => { checkUrl(url) })
+    authWindow.webContents.on('did-navigate-in-page', (_e, url) => { checkUrl(url) })
+    authWindow.webContents.on('did-fail-load', (_e, _code, _desc, url, isMainFrame) => {
+      if (isMainFrame) checkUrl(url)
+    })
+
+    authWindow.loadURL(url)
+
+    authWindow.on('closed', () => {
+      if (!resolved) reject(new Error('Auth window closed'))
+    })
+  })
+})
 
 app.on('ready', createWindow)
 
